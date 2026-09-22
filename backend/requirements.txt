@@ -4,3 +4,4 @@ numpy
 pandas
 rasterio
 pydantic
+matplotlib
