@@ -1,0 +1,164 @@
+# =========================================================
+# Python
+# =========================================================
+
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Python packaging
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Test / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+
+# =========================================================
+# Environment & Secrets
+# =========================================================
+
+.env
+.env.*
+!.env.example
+
+# API keys / credentials
+*.pem
+*.key
+secrets/
+credentials/
+
+
+# =========================================================
+# Jupyter
+# =========================================================
+
+.ipynb_checkpoints/
+
+
+# =========================================================
+# Data
+# =========================================================
+
+# Raw NASA datasets can be huge
+data/raw/*
+!data/raw/.gitkeep
+
+# Intermediate processing files
+data/interim/*
+!data/interim/.gitkeep
+
+# Processed data
+data/processed/*
+!data/processed/.gitkeep
+
+# Keep only small sample/demo data
+!data/sample/
+!data/sample/**
+
+# Large geospatial files
+*.tif
+*.tiff
+*.img
+*.jp2
+*.vrt
+*.hdf
+*.h5
+*.nc
+
+# Large scientific / binary files
+*.bin
+*.dat
+*.zip
+*.tar
+*.gz
+
+
+# =========================================================
+# Frontend
+# =========================================================
+
+node_modules/
+dist/
+build/
+.vite/
+*.local
+
+# npm logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+
+# =========================================================
+# React / Frontend environment
+# =========================================================
+
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+
+
+# =========================================================
+# 3D Assets
+# =========================================================
+
+# Large generated 3D files
+*.glb
+*.gltf
+
+# Allow small demo 3D models for Frontend rendering & samples
+!frontend/public/assets/*.glb
+!frontend/public/assets/*.gltf
+!data/sample/*.glb
+
+
+# =========================================================
+# IDE / Editors
+# =========================================================
+
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+
+# =========================================================
+# Logs
+# =========================================================
+
+*.log
+logs/
+
+
+# =========================================================
+# Docker
+# =========================================================
+
+docker-compose.override.yml
+
+
+# =========================================================
+# Temporary files
+# =========================================================
+
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
