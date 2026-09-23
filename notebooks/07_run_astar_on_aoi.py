@@ -15,8 +15,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "backend"))
 
 from app.core.routing.astar import astar
-from app.core.routing.cost_function import slope_cost
-
+from app.core.routing.route_modes import get_route_mode
+from app.core.routing.cost_function import weighted_terrain_cost, slope_cost
 
 # ============================================================
 # Paths
@@ -169,116 +169,152 @@ if not np.isfinite(terrain_cost[start]):
 if not np.isfinite(terrain_cost[goal]):
     raise ValueError("Goal cell is not traversable.")
 
-
 # ============================================================
-# Run A*
+# Run A* for all route modes
 # ============================================================
 
-print("\nRunning A*...")
+modes = ["fastest", "balanced", "conservative"]
 
-path = astar(
-    cost_grid=terrain_cost,
-    start=start,
-    goal=goal,
-    cell_size=resolution,
-)
+results = {}
 
-if path is None:
-    raise RuntimeError(
-        "A* could not find a route."
+for mode_name in modes:
+
+    mode = get_route_mode(mode_name)
+
+    print()
+    print(f"===== {mode.name} =====")
+
+    # Apply route mode to terrain cost
+    weighted_cost = weighted_terrain_cost(
+        terrain_cost,
+        mode.terrain_weight,
     )
 
-print("Route found!")
-print("Number of cells:", len(path))
-
-
-# ============================================================
-# Calculate route statistics
-# ============================================================
-
-route_distance = 0.0
-route_cost = 0.0
-
-for i in range(1, len(path)):
-
-    previous = path[i - 1]
-    current = path[i]
-
-    row1, col1 = previous
-    row2, col2 = current
-
-    row_distance = abs(row2 - row1)
-    col_distance = abs(col2 - col1)
-
-    movement_cells = math.sqrt(
-        row_distance ** 2
-        + col_distance ** 2
+    # Keep blocked cells blocked
+    weighted_cost = apply_blocked_mask(
+        weighted_cost,
+        blocked_mask,
     )
 
-    movement_distance = (
-        movement_cells * resolution
+    # Keep NoData cells blocked
+    weighted_cost[~valid_mask] = np.inf
+
+    # Run A*
+    path = astar(
+        cost_grid=weighted_cost,
+        start=start,
+        goal=goal,
+        cell_size=resolution,
     )
 
-    route_distance += movement_distance
+    if path is None:
+        print("No route found.")
+        continue
 
-    route_cost += (
-        movement_distance
-        * terrain_cost[current]
+    # --------------------------------------------------------
+    # Route distance
+    # --------------------------------------------------------
+
+    route_distance = 0.0
+
+    for i in range(1, len(path)):
+
+        previous = path[i - 1]
+        current = path[i]
+
+        row1, col1 = previous
+        row2, col2 = current
+
+        row_distance = abs(row2 - row1)
+        col_distance = abs(col2 - col1)
+
+        movement_cells = math.sqrt(
+            row_distance ** 2
+            + col_distance ** 2
+        )
+
+        movement_distance = (
+            movement_cells * resolution
+        )
+
+        route_distance += movement_distance
+
+    # --------------------------------------------------------
+    # Raw terrain statistics
+    # --------------------------------------------------------
+
+    raw_route_costs = np.array(
+        [
+            terrain_cost[row, col]
+            for row, col in path
+        ]
     )
 
+    raw_accumulated_cost = np.sum(raw_route_costs)
+    raw_average_cost = np.mean(raw_route_costs)
 
-print("\nRoute Statistics")
-print("----------------------------")
-print(
-    f"Route distance: "
-    f"{route_distance:.2f} m"
-)
-print(
-    f"Route distance: "
-    f"{route_distance / 1000:.3f} km"
-)
-print(
-    f"Accumulated terrain cost: "
-    f"{route_cost:.2f}"
-)
+    # --------------------------------------------------------
+    # Weighted optimization cost
+    # --------------------------------------------------------
 
-# ============================================================
-# Route Terrain Statistics
-# ============================================================
+    weighted_route_costs = np.array(
+        [
+            weighted_cost[row, col]
+            for row, col in path
+        ]
+    )
 
-route_costs = np.array(
-    [
-        terrain_cost[row, col]
-        for row, col in path
-    ]
-)
+    weighted_accumulated_cost = np.sum(
+        weighted_route_costs
+    )
 
-average_route_cost = np.mean(
-    route_costs
-)
+    weighted_average_cost = np.mean(
+        weighted_route_costs
+    )
 
-maximum_route_cost = np.max(
-    route_costs
-)
+    # --------------------------------------------------------
+    # Save results
+    # --------------------------------------------------------
 
-minimum_route_cost = np.min(
-    route_costs
-)
+    results[mode_name] = {
+        "mode": mode.name,
+        "path": path,
+        "distance_km": route_distance / 1000,
+        "raw_accumulated_cost": raw_accumulated_cost,
+        "raw_average_cost": raw_average_cost,
+        "weighted_accumulated_cost": weighted_accumulated_cost,
+        "weighted_average_cost": weighted_average_cost,
+    }
 
-print(
-    f"Average terrain cost: "
-    f"{average_route_cost:.4f}"
-)
+    # --------------------------------------------------------
+    # Print results
+    # --------------------------------------------------------
 
-print(
-    f"Minimum terrain cost on route: "
-    f"{minimum_route_cost:.4f}"
-)
+    print("Route cells:", len(path))
+    print(
+        f"Route distance: "
+        f"{route_distance / 1000:.3f} km"
+    )
 
-print(
-    f"Maximum terrain cost on route: "
-    f"{maximum_route_cost:.4f}"
-)
+    print(
+        f"Raw terrain cost: "
+        f"{raw_accumulated_cost:.2f}"
+    )
+
+    print(
+        f"Average raw terrain cost: "
+        f"{raw_average_cost:.4f}"
+    )
+
+    print(
+        f"Weighted optimization cost: "
+        f"{weighted_accumulated_cost:.2f}"
+    )
+
+    print(
+        f"Weighted average cost: "
+        f"{weighted_average_cost:.4f}"
+    )
 
 # ============================================================
 # Route Elevation Statistics
@@ -307,20 +343,7 @@ print(
 )
 
 # ============================================================
-# Convert path to plotting coordinates
-# ============================================================
-
-path_rows = np.array(
-    [point[0] for point in path]
-)
-
-path_cols = np.array(
-    [point[1] for point in path]
-)
-
-
-# ============================================================
-# Plot
+# Plot all route modes
 # ============================================================
 
 fig, ax = plt.subplots(
@@ -344,13 +367,28 @@ fig.colorbar(
     label="Terrain Cost",
 )
 
-ax.plot(
-    path_cols,
-    path_rows,
-    linewidth=2,
-    label="A* Route",
-)
+# Plot each route
+for mode_name, result in results.items():
 
+    path = result["path"]
+
+    path_rows = np.array(
+        [point[0] for point in path]
+    )
+
+    path_cols = np.array(
+        [point[1] for point in path]
+    )
+
+    ax.plot(
+        path_cols,
+        path_rows,
+        linewidth=2,
+        label=result["mode"],
+    )
+
+
+# Start point
 ax.scatter(
     start[1],
     start[0],
@@ -359,6 +397,7 @@ ax.scatter(
     label="Start",
 )
 
+# Goal point
 ax.scatter(
     goal[1],
     goal[0],
@@ -368,7 +407,7 @@ ax.scatter(
 )
 
 ax.set_title(
-    "MarsWalk Intelligence - A* Route"
+    "MarsWalk Intelligence - Route Mode Comparison"
 )
 
 ax.set_xlabel("Column")
@@ -386,7 +425,7 @@ plt.savefig(
 plt.close()
 
 print(
-    "\nImage saved successfully:"
+    "\nComparison image saved successfully:"
 )
 
 print(OUTPUT_PATH)
