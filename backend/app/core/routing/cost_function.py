@@ -37,6 +37,13 @@ def slope_cost(
 
     return 1.0 + normalized_slope ** 2
 
+def weighted_terrain_cost(
+    terrain_cost: np.ndarray,
+    terrain_weight: float,
+) -> np.ndarray:
+    terrain_penalty = terrain_cost - 1.0
+
+    return 1.0 + terrain_weight * terrain_penalty
 
 def combine_costs(
     base_cost: np.ndarray,
