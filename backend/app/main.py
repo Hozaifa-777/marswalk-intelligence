@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
 
 from app.api.route import router as navigation_router
 
@@ -14,7 +16,33 @@ app = FastAPI(
     version="0.1.0"
 )
 
-# Enable CORS for frontend integration
+
+# ============================================================
+# Static Mars Map Tiles
+# ============================================================
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+TILES_PATH = (
+    PROJECT_ROOT
+    / "data"
+    / "processed"
+    / "jezero"
+    / "tiles"
+    / "ctx_ortho"
+)
+
+app.mount(
+    "/tiles/ctx",
+    StaticFiles(directory=TILES_PATH),
+    name="ctx-tiles",
+)
+
+
+# ============================================================
+# CORS
+# ============================================================
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -28,7 +56,6 @@ app.add_middleware(
 # API Routers
 # ============================================================
 
-# Include the navigation router
 app.include_router(
     navigation_router,
     prefix="/api/v1",
@@ -42,7 +69,6 @@ app.include_router(
 
 @app.get("/")
 def root():
-    # Return project basic information
     return {
         "project": "MarsWalk Intelligence",
         "status": "online"
@@ -51,8 +77,6 @@ def root():
 
 @app.get("/health")
 def health():
-    # Return server health status
     return {
         "status": "healthy"
     }
-
