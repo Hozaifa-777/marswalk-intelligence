@@ -1,0 +1,48 @@
+{
+  "type": "FeatureCollection",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "PROJCS[\"Jezero_Crater_Projection\",GEOGCS[\"GCS_Mars_2000_Sphere\",DATUM[\"Mars_2000_(Sphere)\",SPHEROID[\"Mars_2000_Sphere\",3396190,0]],PRIMEM[\"Reference_Meridian\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]]],PROJECTION[\"Equirectangular\"],PARAMETER[\"standard_parallel_1\",18.4663],PARAMETER[\"central_meridian\",0],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Jezero Crater 10x10km Operational Sector",
+        "description": "Active navigation grid for A* pathfinding engine",
+        "grid_rows": 500,
+        "grid_cols": 500,
+        "resolution_m": 20.0
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              4359999.999999998,
+              1090000.0000000028
+            ],
+            [
+              4359999.999999998,
+              1100000.0000000028
+            ],
+            [
+              4349999.999999998,
+              1100000.0000000028
+            ],
+            [
+              4349999.999999998,
+              1090000.0000000028
+            ],
+            [
+              4359999.999999998,
+              1090000.0000000028
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

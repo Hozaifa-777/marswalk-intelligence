@@ -1,0 +1,20 @@
+{
+  "project": "MarsWalk Intelligence",
+  "region": "Jezero Crater",
+  "crs": "PROJCS[\"Jezero_Crater_Projection\",GEOGCS[\"GCS_Mars_2000_Sphere\",DATUM[\"Mars_2000_(Sphere)\",SPHEROID[\"Mars_2000_Sphere\",3396190,0]],PRIMEM[\"Reference_Meridian\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]]],PROJECTION[\"Equirectangular\"],PARAMETER[\"standard_parallel_1\",18.4663],PARAMETER[\"central_meridian\",0],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]",
+  "grid": {
+    "rows": 500,
+    "cols": 500,
+    "resolution_meters": 20.0
+  },
+  "bounds": {
+    "min_x": 4349999.999999998,
+    "max_x": 4359999.999999998,
+    "min_y": 1090000.0000000028,
+    "max_y": 1100000.0000000028
+  },
+  "center": {
+    "x": 4354999.999999998,
+    "y": 1095000.0000000028
+  }
+}
