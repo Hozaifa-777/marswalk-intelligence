@@ -32,6 +32,7 @@ function FitCTX() {
       padding: [0, 0],
       animate: false,
     });
+    map.setMinZoom(map.getZoom());
   }, [map]);
 
   return null;
@@ -43,6 +44,7 @@ function MarsMap() {
       crs={MarsCRS}
       center={[1095000, 4355000]}
       zoom={4}
+      zoomSnap={0.25} 
 
       /*
        * z=0 is allowed technically,
@@ -72,9 +74,10 @@ function MarsMap() {
         url="/tiles/ctx/{z}/{x}/{y}.png"
         tileSize={256}
         minZoom={1}
+        maxNativeZoom={7}   
         maxZoom={7}
-        noWrap={true}
         attribution="NASA / MarsWalk Intelligence"
+        noWrap={true}
       />
 
       {/* Temporary coordinate alignment test */}
