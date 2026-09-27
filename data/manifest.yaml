@@ -1,0 +1,22 @@
+kaggle_dataset: "hozaifa123/marswalk-data"
+
+files:
+  ctx_mosaic:
+    source: "M20_JezeroCrater_CTXortho_mosaic_5m.tif"
+    target: "data/raw/jezero/ctx_ortho/M20_JezeroCrater_CTXortho_mosaic_5m.tif"
+
+  ctx_dem:
+    source: "M20_JezeroCrater_CTXDEM_20m.tif"
+    target: "data/raw/jezero/ctx_dem/M20_JezeroCrater_CTXDEM_20m.tif"
+
+  crism_label:
+    source: "frt000047a3_07_brcarj_mtr3.lbl"
+    target: "data/raw/jezero/science/crism/frt000047a3_07_brcarj_mtr3.lbl"
+
+  crism_header:
+    source: "frt000047a3_07_brcarj_mtr3.hdr"
+    target: "data/raw/jezero/science/crism/frt000047a3_07_brcarj_mtr3.hdr"
+
+  crism_image:
+    source: "frt000047a3_07_brcarj_mtr3.img"
+    target: "data/raw/jezero/science/crism/frt000047a3_07_brcarj_mtr3.img"
