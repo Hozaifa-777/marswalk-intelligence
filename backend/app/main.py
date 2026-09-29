@@ -4,6 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
 from app.api.route import router as navigation_router
+from app.api.mission import router as mission_router
 
 
 # ============================================================
@@ -31,6 +32,9 @@ TILES_PATH = (
     / "tiles"
     / "ctx_ortho"
 )
+
+# Ensure tiles directory exists before mounting to avoid RuntimeError in test environments
+TILES_PATH.mkdir(parents=True, exist_ok=True)
 
 app.mount(
     "/tiles/ctx",
@@ -60,6 +64,10 @@ app.include_router(
     navigation_router,
     prefix="/api/v1",
     tags=["Navigation"]
+)
+
+app.include_router(
+    mission_router
 )
 
 
