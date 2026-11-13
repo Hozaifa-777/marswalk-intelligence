@@ -31,38 +31,111 @@ forwarding, where the browser only ever talks to the Vite dev server.
 
 ---
 
-## 2. Backend endpoints (confirmed)
+## 2. Backend API Contract (verified)
 
-| Endpoint | Purpose | Status |
-|---|---|---|
-| `GET /health` | Liveness check, returns `{"status":"healthy"}` | ✅ confirmed working |
-| `GET /tiles/ctx/{z}/{x}/{y}.png` | Static CTX basemap tiles (mounted from `data/processed/jezero/tiles/ctx_ortho`) | ✅ confirmed working, z0–z7 |
-| `GET /api/v1/science/targets` | Science target points as a GeoJSON FeatureCollection | ✅ built, currently returns placeholder targets (not yet CRISM-derived) |
-| `POST /api/v1/navigate` (path may differ — see below) | A* route between two points, modes: `fastest` / `balanced` / `conservative` | ⚠️ **exact request/response schema not yet confirmed against the running backend** |
+The API contract below was retrieved directly from the running FastAPI application's "/openapi.json".
 
-**Before wiring Start/Goal selection**, pull the live contract instead
-of guessing field names:
-```python
-import json, urllib.request
-spec = json.loads(urllib.request.urlopen("http://localhost:8000/openapi.json").read())
-print(list(spec["paths"].keys()))
-```
-Then inspect the matching path's schema. Guessing field names here
-has cost real debugging time elsewhere in this project (see the data
-manifest history) — don't repeat that pattern for the API contract.
+Available Endpoints
 
-Known response shape (from an earlier design conversation, **not yet
-verified against the live schema**):
-```json
+Method| Endpoint| Purpose
+GET| "/health"| Backend health check
+GET| "/"| Root endpoint
+POST| "/api/v1/navigate"| A* route calculation
+POST| "/api/v1/mission/consumables"| Mission oxygen and duration estimation
+GET| "/api/v1/science/targets"| Science target GeoJSON
+
+2.1 Navigation API
+
+"POST /api/v1/navigate"
+
+Request:
+
 {
-  "distance_km": 12.43,
-  "raw_terrain_cost": 1.37,
-  "average_raw_terrain_cost": 1.1,
-  "optimization_cost": 18.42,
-  "average_optimization_cost": 1.5
+  "start": [4350000, 1090000],
+  "goal": [4355000, 1095000],
+  "mode": "balanced"
 }
-```
-Treat this as a hint, not ground truth, until confirmed.
+
+- "start": Required Mars coordinates "[x, y]".
+- "goal": Required Mars coordinates "[x, y]".
+- "mode": Optional; "fastest", "balanced", or "conservative".
+- Default mode: "balanced".
+
+Response: "GeoJSONResponse" (FeatureCollection).
+
+Each feature contains:
+
+- "geometry": LineString with Mars coordinate pairs.
+- "properties.mode"
+- "properties.distance_km"
+- "properties.raw_terrain_cost"
+- "properties.average_raw_terrain_cost"
+- "properties.optimization_cost"
+- "properties.average_optimization_cost"
+
+2.2 Mission Consumables API
+
+"POST /api/v1/mission/consumables"
+
+Required request fields:
+
+- "distance_km": Total route distance in kilometers, greater than zero.
+- "average_raw_terrain_cost": Average terrain cost multiplier.
+
+Optional fields:
+
+- "average_slope_percent": Defaults to 0.0.
+- "payload_kg": Defaults to 0.0.
+- "base_walking_speed_ms": Defaults to 0.35.
+- "suit_capacity_hours": Defaults to 8.5.
+
+Response fields:
+
+- "estimated_duration_hours"
+- "estimated_oxygen_liters"
+- "oxygen_percent_of_suit_capacity"
+- "average_metabolic_rate_kcal_hr"
+- "slope_penalty_kcal_hr"
+- "payload_penalty_kcal_hr"
+- "safety_margin_hours"
+- "assumptions"
+
+The assumptions object documents the parameters used by the estimation model.
+
+2.3 Science Targets API
+
+"GET /api/v1/science/targets"
+
+Response: "ScienceTargetsResponse" (GeoJSON FeatureCollection).
+
+Each feature contains:
+
+- "geometry": Point with Mars coordinates.
+- "properties.id"
+- "properties.name"
+- "properties.target_type"
+- "properties.source"
+- "properties.science_value"
+- "properties.ranking_method"
+- "properties.evidence"
+
+Each evidence entry includes:
+
+- "parameter"
+- "value_dn"
+- "threshold_dn"
+- "relative_percentile"
+- "passed_threshold"
+
+2.4 Validation
+
+FastAPI returns HTTP 422 for request validation errors.
+
+To inspect the current contract:
+
+python -c "import json,urllib.request; print(json.dumps(json.load(urllib.request.urlopen('http://localhost:8000/openapi.json')),indent=2))"
+
+The running OpenAPI specification is the source of truth for request and response schemas. Do not guess field names or response structures.
 
 ---
 

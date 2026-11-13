@@ -1,167 +1,314 @@
-# MarsWalk Intelligence — Team Setup Guide
+MarsWalk Intelligence — Team Setup Guide
 
-Follow this once per environment (your laptop, a fresh Codespace, or a
-Colab notebook). Everything here is copy-paste; no decisions needed.
+This guide explains how to set up and run MarsWalk Intelligence in a fresh environment.
 
----
+Supported environments:
 
-## 0. Prerequisites (one-time, per person)
+- GitHub Codespaces
+- Local Linux / macOS / Windows (WSL)
+- Google Colab (backend/frontend with tunneling)
 
-You need a Kaggle account with API access, regardless of which
-environment you run the project on.
-
-1. Create a Kaggle account if you don't have one.
-2. Go to **kaggle.com → Account → API → Create New Token**.
-   This downloads a `kaggle.json` file.
-3. Keep that file somewhere safe — you'll upload it below.
+The project uses shared datasets hosted on Kaggle. No manual geospatial preprocessing is required for normal team members.
 
 ---
 
-## 1. Get the code
+0. Prerequisites
 
-```bash
+Install or prepare:
+
+- Python 3.10+
+- Node.js and npm
+- Git
+- A Kaggle account with access to the team's datasets
+
+Shared datasets:
+
+Dataset| Purpose
+"hozaifa123/marswalk-data"| Raw CTX and CRISM data
+"hozaifa123/marswalk-processed-jezero"| Processed DEM, CRISM products, and map tiles
+
+Repository:
+
+"https://github.com/Hozaifa-777/marswalk-intelligence"
+
+---
+
+1. Clone the Repository
+
 git clone https://github.com/Hozaifa-777/marswalk-intelligence.git
 cd marswalk-intelligence
-```
 
 ---
 
-## 2. Get the data
+2. Configure Kaggle Authentication
 
-### 2.1 Kaggle credentials (do this first, every environment)
+Kaggle authentication is required to download private or restricted datasets.
 
-**Local machine / GitHub Codespaces (terminal):**
-```bash
+Option A — API Token (Recommended)
+
+Generate an API token from:
+
+https://www.kaggle.com/settings
+
+Set the environment variable:
+
+export KAGGLE_API_TOKEN="YOUR_KAGGLE_API_TOKEN"
+
+For GitHub Codespaces, add "KAGGLE_API_TOKEN" under repository or Codespace secrets.
+
+For Google Colab, add "KAGGLE_API_TOKEN" to Colab Secrets and retrieve it using:
+
+from google.colab import userdata
+import os
+
+os.environ["KAGGLE_API_TOKEN"] = userdata.get("KAGGLE_API_TOKEN")
+
+Option B — Legacy kaggle.json
+
+If using the legacy credentials file:
+
 mkdir -p ~/.kaggle
 mv /path/to/kaggle.json ~/.kaggle/kaggle.json
 chmod 600 ~/.kaggle/kaggle.json
-```
 
-**Google Colab (notebook cell):**
-```python
-from google.colab import files
-uploaded = files.upload()   # pick kaggle.json when prompted
+Do not commit credentials or share personal API tokens.
 
-!mkdir -p ~/.kaggle
-!mv kaggle.json ~/.kaggle/
-!chmod 600 ~/.kaggle/kaggle.json
-```
+---
 
-### 2.2 Install the data dependencies
+3. Download Project Data
 
-```bash
-pip install -q kagglehub pyyaml
-```
+Install the bootstrap dependencies:
 
-### 2.3 Pull all project data
+python -m pip install kagglehub pyyaml
 
-```bash
+Download all required datasets:
+
 python scripts/bootstrap_data.py
-```
 
-This fetches everything from the team's shared Kaggle dataset
-(`hozaifa123/marswalk-data`) into `data/raw/` and `data/processed/`,
-matching exactly what `data/manifest.yaml` describes. It skips
-anything already present, so it's safe to re-run any time.
+The bootstrap script downloads:
 
-If a specific file is missing or renamed on Kaggle, this step will
-fail with a clear "source not found" message — check
-`data/manifest.yaml` against the real file list:
-```bash
+Raw data
+
+- CTX orthomosaic
+- CTX DEM
+- CRISM label
+- CRISM header
+- CRISM image
+
+Processed data
+
+- Jezero AOI DEM
+- CRISM science products
+- CRISM overlays
+- CTX map tiles
+- Map metadata
+- AOI boundary
+
+The processed dataset contains a canonical nested "jezero/" directory. The bootstrap script selects that directory to preserve the expected project structure.
+
+The resulting structure is:
+
+data/
+├── raw/
+│   └── jezero/
+│       ├── ctx_ortho/
+│       ├── ctx_dem/
+│       └── science/
+│           └── crism/
+│
+└── processed/
+    └── jezero/
+        ├── science/
+        │   └── crism/
+        ├── terrain/
+        └── tiles/
+            └── ctx_ortho/
+
+Optional Bootstrap Commands
+
+Download only selected raw files:
+
+python scripts/bootstrap_data.py --only ctx_mosaic,ctx_dem
+
+Skip selected files:
+
+python scripts/bootstrap_data.py --skip crism_image
+
+Download raw data without processed data:
+
+python scripts/bootstrap_data.py --raw-only
+
+The script skips files and processed directories that already exist.
+
+If a dataset file is missing or renamed, inspect its contents using:
+
 kaggle datasets files hozaifa123/marswalk-data
-```
-
-**You should never need to run GDAL, `gdal2tiles.py`, or any of the
-`scripts/crop_aoi.py` / `scripts/align_crism_to_dem.py` pipeline
-yourself.** That heavy processing is done once by whoever owns the
-geospatial pipeline, then published to Kaggle. `bootstrap_data.py` is
-the only command anyone else needs.
 
 ---
 
-## 3. Run the backend
+4. Validate the Data
 
-```bash
+Before running the backend:
+
+python scripts/validate_data.py
+
+Expected final output:
+
+ALL CHECKS PASSED
+
+The validation script checks:
+
+- Raw file existence and size
+- CTX raster metadata and CRS
+- DEM dimensions, resolution, and valid pixels
+- CRISM header dimensions and image consistency
+- Processed data directory availability
+
+Do not proceed if validation fails.
+
+---
+
+5. Install and Run the Backend
+
+Open a terminal:
+
 cd backend
-pip install -q -r requirements.txt
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-```
+python -m pip install -r requirements.txt
 
-Verify it's up (new terminal, or after backgrounding it):
-```bash
+Start FastAPI:
+
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+Verify the backend:
+
 curl http://localhost:8000/health
-# expect: {"status":"healthy"}
-```
+
+Inspect the API documentation:
+
+http://localhost:8000/docs
+
+OpenAPI specification:
+
+http://localhost:8000/openapi.json
+
+Available API Endpoints
+
+Method| Endpoint| Purpose
+GET| "/health"| Health check
+GET| "/"| Root endpoint
+POST| "/api/v1/navigate"| A* route calculation
+POST| "/api/v1/mission/consumables"| Mission consumables estimation
+GET| "/api/v1/science/targets"| Science targets GeoJSON
+
+The running OpenAPI specification is the source of truth for API request and response schemas.
 
 ---
 
-## 4. Run the frontend
+6. Install and Run the Frontend
 
-```bash
+Open a second terminal from the repository root:
+
 cd frontend
 npm install
 npm run dev -- --host 0.0.0.0 --port 5173
-```
 
-`vite.config.mjs` already proxies `/tiles` and `/api` to
-`localhost:8000`, so the frontend talks to the backend automatically —
-no extra config needed.
+The frontend uses:
 
----
+- React
+- Vite
+- Leaflet
+- React Leaflet
 
-## 5. Open the app (depends on your environment)
+The Vite development server proxies API and map tile requests to the backend.
 
-- **Local machine:** open `http://localhost:5173` directly.
-- **GitHub Codespaces:** open the **Ports** tab, find port 5173, click
-  the globe icon to open the forwarded URL. Set visibility to
-  "Public" if a teammate needs the link too.
-- **Google Colab:** Colab has no direct URL to a running port, so
-  tunnel it with ngrok:
+Make sure both services are running:
 
-  ```python
-  !pip install -q pyngrok
-  from pyngrok import ngrok
-
-  ngrok.set_auth_token("YOUR_NGROK_AUTHTOKEN")  # from dashboard.ngrok.com/get-started/your-authtoken
-  public_url = ngrok.connect(5173)
-  print(public_url)
-  ```
-  Open the printed `https://xxxx.ngrok-free.app` link. (Free ngrok
-  tokens are personal — each teammate should use their own, not share
-  one in chat/commits.)
+Service| Port
+FastAPI backend| 8000
+Vite frontend| 5173
 
 ---
 
-## 6. Troubleshooting
+7. Open the Application
 
-| Symptom | Cause | Fix |
-|---|---|---|
-| `ECONNREFUSED` on `/tiles/...` in the Vite log | Backend isn't running | Go back to step 3 |
-| `Blocked request. This host ... is not allowed` | Vite's host check (only hits behind ngrok/Codespaces) | Already fixed in `vite.config.mjs` (`allowedHosts: true`) |
-| `Failed to resolve import "./components/X/X"` | A component file is missing | Should not happen once the repo is up to date — `git pull` |
-| `rasterio.errors.RasterioIOError: ... No such file` | Data not fetched, or `data/manifest.yaml` paths don't match what a script expects | Re-run `bootstrap_data.py`; check the exact path in the error against the manifest |
-| Map loads but is entirely black | Backend not serving tiles, or CTX layer unchecked in the sidebar | Check `curl http://localhost:8000/tiles/ctx/0/0/0.png` returns `200` |
+Local Machine
+
+Open:
+
+http://localhost:5173
+
+GitHub Codespaces
+
+1. Open the Codespaces Ports tab.
+2. Locate port "5173".
+3. Click the forwarded address.
+4. Set port visibility appropriately if teammates need access.
+
+Keep backend port "8000" available to the frontend through the Codespaces environment.
+
+Google Colab
+
+Colab does not directly expose localhost ports.
+
+Use a tunneling service such as ngrok to expose the frontend.
+
+Each teammate should use their own ngrok authentication token.
 
 ---
 
-## 7. If you're the one regenerating processed data (tiles/DEM/CRISM)
+8. Troubleshooting
 
-Only do this if you've changed the source rasters or the processing
-scripts. Everyone else just runs `bootstrap_data.py`.
+Problem| Possible cause| Solution
+Kaggle authentication failure| Missing or invalid credentials| Configure "KAGGLE_API_TOKEN" or "kaggle.json"
+Missing raw files| Bootstrap did not complete| Re-run "python scripts/bootstrap_data.py"
+Validation failure| Incorrect or incomplete dataset| Inspect the failing path and compare it with "data/manifest.yaml"
+"ModuleNotFoundError"| Missing Python dependency| Install "backend/requirements.txt"
+"ECONNREFUSED"| Backend is not running| Start FastAPI on port 8000
+Vite API requests fail| Backend unavailable or proxy misconfigured| Check backend and "vite.config.mjs"
+Map appears black| Missing tiles or disabled CTX layer| Check the tile endpoint and sidebar layer settings
+Port cannot be opened| Codespaces forwarding issue| Check the Ports tab and port visibility
 
-```bash
+---
+
+9. Regenerating Processed Data (Maintainers Only)
+
+Normal team members should NOT run this section.
+
+Only run these scripts if the original source rasters or geospatial processing pipeline have changed.
+
 python scripts/crop_aoi.py
 python scripts/align_crism_to_dem.py
+
+Regenerate CTX tiles if required:
+
 gdal2tiles.py -p raster --xyz -r bilinear \
   data/raw/jezero/ctx_ortho/M20_JezeroCrater_CTXortho_mosaic_5m.tif \
   data/processed/jezero/tiles/ctx_ortho
 
-python scripts/publish_processed_data.py -m "describe what changed"
-```
+Publish the updated processed dataset:
 
-Then update `data/manifest.yaml` with the real file paths from:
-```bash
-kaggle datasets files hozaifa123/marswalk-processed-jezero
-```
+python scripts/publish_processed_data.py -m "Describe changes"
 
-and tell the team to re-run `bootstrap_data.py`.
+Verify the published dataset and update the shared Kaggle dataset version.
+
+Notify the team to download the updated data.
+
+---
+
+10. Important Project Rules
+
+- Never modify original files under "data/raw/".
+- Do not manually regenerate processed data unless necessary.
+- Do not commit large raster datasets or personal credentials.
+- Keep the data manifest synchronized with actual dataset paths.
+- Preserve the existing navigation architecture and A* implementation.
+- Keep Science analysis separate from the Navigation Terrain Cost Function.
+- Check API contracts through OpenAPI before changing frontend integration.
+
+---
+
+MarsWalk Intelligence — Team Setup Guide
+
+For project-specific architecture and frontend/backend integration details, see:
+
+"docs/pitch/FRONTEND_BACKEND_GUIDE.md"

@@ -85,20 +85,19 @@ def fetch_bulk(key, entry):
         print(f"  - {key}: already present, skipping ({target})")
         return
 
-    print(f"  - {key}: downloading whole dataset '{dataset_slug}' ...")
+    print(f"  - {key}: downloading '{dataset_slug}' ...")
+
     cache_path = Path(kagglehub.dataset_download(dataset_slug))
 
-    target.parent.mkdir(parents=True, exist_ok=True)
+    # Kaggle dataset contains duplicate root-level and nested
+    # copies. Use the canonical nested jezero directory.
+    source = cache_path / "jezero"
 
-    if target.exists():
-        for item in cache_path.iterdir():
-            dest = target / item.name
-            if item.is_dir():
-                shutil.copytree(item, dest, dirs_exist_ok=True)
-            else:
-                shutil.copy2(item, dest)
-    else:
-        shutil.copytree(cache_path, target)
+    if not source.is_dir():
+        source = cache_path
+
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(source, target, dirs_exist_ok=True)
 
     print(f"    done -> {target}")
 
