@@ -5,6 +5,7 @@ import ControlPanel from "./components/ControlPanel/ControlPanel";
 import MissionPanel from "./components/MissionPanel/MissionPanel";
 import MissionInsights from "./components/MissionInsights/MissionInsights";
 import MarsMap from "./components/MarsMap/MarsMap";
+import Terrain3D from "./components/MarsMap/Terrain3D";
 import StatusBar from "./components/StatusBar/StatusBar";
 
 import { INITIAL_LAYERS } from "./utils/layerConfig";
@@ -31,6 +32,7 @@ function App() {
   const [routeSet, setRouteSet] = useState({});
   const [comparisonLoading, setComparisonLoading] = useState(false);
   const [consumableInputs, setConsumableInputs] = useState({ payloadKg: 15, averageSlopePercent: 5 });
+  const [viewMode, setViewMode] = useState("2d");
 
   useEffect(() => {
     getScienceTargets().then(setScienceTargets);
@@ -142,28 +144,61 @@ function App() {
         </aside>
 
         <main className="map-stage">
-          <div className="map-overlay map-overlay--top-left">
-            <span className="map-chip">CTX</span>
-            <span className="map-chip map-chip--muted">MARS CRS</span>
+          <div className="map-view-switch" role="group" aria-label="Map view">
+            <button
+              type="button"
+              className={viewMode === "2d" ? "active" : ""}
+              aria-pressed={viewMode === "2d"}
+              onClick={() => setViewMode("2d")}
+            >
+              2D MAP
+            </button>
+            <button
+              type="button"
+              className={viewMode === "3d" ? "active" : ""}
+              aria-pressed={viewMode === "3d"}
+              onClick={() => setViewMode("3d")}
+            >
+              3D TERRAIN
+            </button>
           </div>
-          <div className="map-overlay map-overlay--top-right">
-            <span className="map-instruction">
-              {selectionMode === "start" ? "Click map to set START" : "Click map to set GOAL"}
-            </span>
-          </div>
-          <MarsMap
-            layers={layers}
-            start={start}
-            goal={goal}
-            route={route}
-            scienceTargets={scienceTargets}
-            activeLayer={activeLayer}
-            onActiveLayerChange={setActiveLayer}
-            onMapClick={handleMapClick}
-            onScienceSelect={(target) => { setSelectedTarget(target); setSelectedObject("science"); setActiveLayer("scienceTargets"); }}
-            onRouteSelect={() => { setSelectedTarget(null); setSelectedObject("route"); setActiveLayer("route"); }}
-            selectedTargetId={selectedTarget?.id}
-          />
+
+          {viewMode === "3d" ? (
+            <Terrain3D />
+          ) : (
+            <>
+              <div className="map-overlay map-overlay--top-left">
+                <span className="map-chip">CTX</span>
+                <span className="map-chip map-chip--muted">MARS CRS</span>
+              </div>
+              <div className="map-overlay map-overlay--top-right">
+                <span className="map-instruction">
+                  {selectionMode === "start" ? "Click map to set START" : "Click map to set GOAL"}
+                </span>
+              </div>
+              <MarsMap
+                layers={layers}
+                start={start}
+                goal={goal}
+                route={route}
+                scienceTargets={scienceTargets}
+                activeLayer={activeLayer}
+                onActiveLayerChange={setActiveLayer}
+                onMapClick={handleMapClick}
+                onScienceSelect={(target) => {
+                  setSelectedTarget(target);
+                  setSelectedObject("science");
+                  setActiveLayer("scienceTargets");
+                }}
+                onRouteSelect={() => {
+                  setSelectedTarget(null);
+                  setSelectedObject("route");
+                  setActiveLayer("route");
+                }}
+                selectedTargetId={selectedTarget?.id}
+              />
+            </>
+          )}
         </main>
 
         <MissionInsights

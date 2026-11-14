@@ -6,7 +6,7 @@ from pathlib import Path
 from app.api.route import router as navigation_router
 from app.api.mission import router as mission_router
 from app.api.science import router as science_router
-
+from app.api.terrain import router as terrain_router
 
 # ============================================================
 # FastAPI Application Setup
@@ -112,6 +112,9 @@ app.include_router(
     science_router
 )
 
+app.include_router(
+    terrain_router
+)
 
 # ============================================================
 # Utility Endpoints
