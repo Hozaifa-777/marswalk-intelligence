@@ -27,12 +27,24 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
-# Task 1 output directory: the --out-dir of the MEDA pipeline
-# (app/services/weather/pipeline.py). Generated and git-ignored. Only
-# weather_intensity.parquet is read at runtime; manifest.json next to it is
-# read for provenance and the W_t component directions.
-WEATHER_PROCESSED_DIR = PROJECT_ROOT / "data" / "resources" / "MEDA_Weather_ds" / "processed"
-DEFAULT_WEATHER_INTENSITY_PATH = WEATHER_PROCESSED_DIR / "weather_intensity.parquet"
+# Task 1 output directory: MEDA weather pipeline runtime data.
+# Contains weather_intensity.parquet and manifest.json.
+# These files are included in the repository for deployment.
+
+WEATHER_PROCESSED_DIR = (
+    PROJECT_ROOT
+    / "data"
+    / "processed"
+    / "resources"
+    / "MEDA_Weather_ds"
+    / "processed"
+)
+
+DEFAULT_WEATHER_INTENSITY_PATH = (
+    WEATHER_PROCESSED_DIR / "weather_intensity.parquet"
+)
+
+
 
 
 def _env_float(name: str, default: float) -> float:

@@ -115,6 +115,24 @@ data/processed/jezero/science/crism/*
 
 
 # =========================================================
+# MEDA Weather runtime data
+# =========================================================
+
+!data/processed/resources/
+data/processed/resources/*
+
+!data/processed/resources/MEDA_Weather_ds/
+data/processed/resources/MEDA_Weather_ds/*
+
+!data/processed/resources/MEDA_Weather_ds/processed/
+data/processed/resources/MEDA_Weather_ds/processed/*
+
+!data/processed/resources/MEDA_Weather_ds/processed/weather_intensity.parquet
+!data/processed/resources/MEDA_Weather_ds/processed/manifest.json
+
+
+
+# =========================================================
 # Frontend
 # =========================================================
 
